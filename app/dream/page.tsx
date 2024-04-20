@@ -76,28 +76,38 @@ export default function DreamPage() {
       height="250px"
     />
   );
-
   async function generatePhoto(fileUrl: string) {
-    await new Promise((resolve) => setTimeout(resolve, 200));
-    setLoading(true);
-    const res = await fetch("/generate", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ imageUrl: fileUrl, theme, room }),
-    });
-
-    let newPhoto = await res.json();
-    if (res.status !== 200) {
-      setError(newPhoto);
-    } else {
-      setRestoredImage(newPhoto[1]);
-    }
-    setTimeout(() => {
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      setLoading(true);
+      const res = await fetch("/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ imageUrl: fileUrl, theme, room }),
+      });
+  
+  
+      if (!res.ok) {
+        throw new Error(`HTTP error! Status: ${res.status}`);
+      }
+  
+      const json = await res.json();
+      console.log(json);
+  
+      if (json && json.length > 1) {
+        setRestoredImage(json[1]);
+      } else {
+        throw new Error("Unexpected JSON format received from the server.");
+      }
+    } catch (error:any) {
+      setError(error.message || "An error occurred while processing the request.");
+    } finally {
       setLoading(false);
-    }, 1300);
+    }
   }
+  
 
   return (
     <div className="flex max-w-6xl mx-auto flex-col items-center justify-center py-2 min-h-screen">
